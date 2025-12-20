@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAvailableDates, requestBookingOtp, confirmBooking, type AvailableDate } from '../api/bookings';
+import { getAvailableDates, createBooking, type AvailableDate } from '../api/bookings';
+import { useAuth } from '../context/AuthContext';
 import '../styles/main.scss';
 
-type Step = 'service' | 'date' | 'details' | 'otp' | 'success';
+type Step = 'service' | 'date' | 'details' | 'review' | 'success';
 
 const services = [
     { id: 1, name: 'Interior Wash', price: '$20' },
@@ -12,13 +13,12 @@ const services = [
 ];
 
 const Booking: React.FC = () => {
+    const { user, isAuthenticated } = useAuth();
     const [step, setStep] = useState<Step>('service');
     const [selectedService, setSelectedService] = useState<number>(0);
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [availableDates, setAvailableDates] = useState<AvailableDate[]>([]);
     const [details, setDetails] = useState({ name: '', phone: '', vehicle: '', notes: '' });
-    const [bookingId, setBookingId] = useState<string>('');
-    const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -29,6 +29,17 @@ const Booking: React.FC = () => {
             fetchDates();
         }
     }, [step]);
+
+    // Pre-fill user details if available
+    useEffect(() => {
+        if (user) {
+            setDetails(prev => ({
+                ...prev,
+                name: user.name || prev.name,
+                phone: user.phone || prev.phone
+            }));
+        }
+    }, [user]);
 
     const fetchDates = async () => {
         setLoading(true);
@@ -44,6 +55,10 @@ const Booking: React.FC = () => {
     };
 
     const handleServiceSelect = (id: number) => {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: { pathname: '/booking' } } });
+            return;
+        }
         setSelectedService(id);
         setStep('date');
     };
@@ -53,12 +68,16 @@ const Booking: React.FC = () => {
         setStep('details');
     };
 
-    const handleDetailsSubmit = async (e: React.FormEvent) => {
+    const handleDetailsSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setStep('review');
+    };
+
+    const handleConfirmBooking = async () => {
         setLoading(true);
         setError('');
         try {
-            const response = await requestBookingOtp({
+            await createBooking({
                 serviceId: selectedService,
                 date: selectedDate,
                 customerName: details.name,
@@ -66,28 +85,16 @@ const Booking: React.FC = () => {
                 vehicleDetails: details.vehicle,
                 notes: details.notes,
             });
-            setBookingId(response.bookingId);
-            setStep('otp');
+            setStep('success');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to request booking');
+            setError(err.response?.data?.message || 'Failed to create booking');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleOtpSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        try {
-            await confirmBooking(bookingId, otp);
-            setStep('success');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Invalid OTP');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const getServiceName = (id: number) => services.find(s => s.id === id)?.name;
+    const getServicePrice = (id: number) => services.find(s => s.id === id)?.price;
 
     const renderStep = () => {
         switch (step) {
@@ -169,33 +176,29 @@ const Booking: React.FC = () => {
                         </div>
                         <div className="actions">
                             <button type="button" className="btn-secondary" onClick={() => setStep('date')}>Back</button>
-                            <button type="submit" className="btn-primary" disabled={loading}>
-                                {loading ? 'Processing...' : 'Next'}
-                            </button>
+                            <button type="submit" className="btn-primary">Review Booking</button>
                         </div>
                     </form>
                 );
-            case 'otp':
+            case 'review':
                 return (
-                    <form onSubmit={handleOtpSubmit}>
-                        <h2>Verify Phone Number</h2>
-                        <p>We sent an OTP to {details.phone}</p>
-                        <div className="form-group">
-                            <label>OTP</label>
-                            <input
-                                type="text"
-                                required
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                            />
+                    <div className="review-step">
+                        <h2>Review & Confirm</h2>
+                        <div className="review-details">
+                            <p><strong>Service:</strong> {getServiceName(selectedService)} ({getServicePrice(selectedService)})</p>
+                            <p><strong>Date:</strong> {new Date(selectedDate).toLocaleDateString()}</p>
+                            <p><strong>Name:</strong> {details.name}</p>
+                            <p><strong>Phone:</strong> {details.phone}</p>
+                            <p><strong>Vehicle:</strong> {details.vehicle}</p>
+                            {details.notes && <p><strong>Notes:</strong> {details.notes}</p>}
                         </div>
                         <div className="actions">
-                            <button type="button" className="btn-secondary" onClick={() => setStep('details')}>Back</button>
-                            <button type="submit" className="btn-primary" disabled={loading}>
-                                {loading ? 'Verifying...' : 'Confirm Booking'}
+                            <button className="btn-secondary" onClick={() => setStep('details')}>Back</button>
+                            <button className="btn-primary" onClick={handleConfirmBooking} disabled={loading}>
+                                {loading ? 'Confirming...' : 'Confirm Booking'}
                             </button>
                         </div>
-                    </form>
+                    </div>
                 );
             case 'success':
                 return (
