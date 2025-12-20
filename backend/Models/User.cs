@@ -9,8 +9,9 @@ namespace CarWashBooking.Api.Models
         [Required]
         public string Name { get; set; } = string.Empty;
         
-        [Required]
-        public string Phone { get; set; } = string.Empty;
+        public string? Phone { get; set; }
+
+        public string? Email { get; set; }
         
         public string Role { get; set; } = "Customer"; // Customer, Admin
     }

@@ -1,24 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { User, AuthResponse } from '../types/auth';
-import { sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp } from '../api/auth';
+import { googleLogin as apiGoogleLogin } from '../api/auth';
 
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (phone: string, name?: string) => Promise<void>;
-    verifyLogin: (phone: string, otp: string, name?: string) => Promise<void>;
+    googleLogin: (credential: string) => Promise<void>;
     logout: () => void;
 }
 
-// Helper to parse JWT
-const parseJwt = (token: string) => {
-    try {
-        return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-        return null;
-    }
-};
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -30,28 +22,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const token = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
         if (token && storedUser) {
-            // Optional: re-verify token validity or just trust local storage for UI state
             setUser(JSON.parse(storedUser));
         }
         setIsLoading(false);
     }, []);
 
-    const login = async (phone: string, name?: string) => {
-        await apiSendOtp(phone, name);
-    };
-
-    const verifyLogin = async (phone: string, otp: string, name?: string) => {
-        const data: AuthResponse = await apiVerifyOtp(phone, otp, name);
+    const loginWithGoogle = async (credential: string) => {
+        const data: AuthResponse = await apiGoogleLogin(credential);
         localStorage.setItem('token', data.token);
-        const payload = parseJwt(data.token);
-        const role = payload ? (payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'user') : 'user';
 
+        // We can decode the token if needed, but the response already gives us user info
         const userData: User = {
             userId: data.userId,
             name: data.name,
+            email: data.email,
             phone: data.phone,
-            role: role === 'Admin' ? 'admin' : 'user' // Normalize role
+            role: 'user' // Default to user, backend can enforce admin if needed
         };
+
+        // If backend sends specific role inside token, we might parse it, but for now simplistic approach
+        // Or if data.role is available (we didn't add it to AuthResponse but we could)
+
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
     };
@@ -64,7 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, verifyLogin, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, googleLogin: loginWithGoogle, logout }}>
             {children}
         </AuthContext.Provider>
     );

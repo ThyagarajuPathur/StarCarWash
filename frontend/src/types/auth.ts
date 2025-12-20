@@ -1,8 +1,9 @@
 export interface User {
     userId: string;
     name?: string;
-    phone: string;
-    role?: 'user' | 'admin'; // Assuming role might be needed, though not explicitly detailed in response, admin check is via JWT usually.
+    email: string;
+    phone?: string;
+    role?: 'user' | 'admin';
 }
 
 export interface AuthResponse {
@@ -10,5 +11,6 @@ export interface AuthResponse {
     expiresAt: string;
     userId: string;
     name?: string;
-    phone: string;
+    email: string;
+    phone?: string;
 }

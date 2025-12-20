@@ -89,6 +89,44 @@ namespace CarWashBooking.Api.Controllers
             });
         }
 
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto request)
+        {
+            try
+            {
+                var payload = await Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(request.Token);
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
+                if (user == null)
+                {
+                    user = new User
+                    {
+                        Name = payload.Name,
+                        Email = payload.Email,
+                        Role = "Customer"
+                    };
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+                }
+
+                var token = GenerateJwtToken(user);
+
+                return Ok(new
+                {
+                    token,
+                    expiresAt = DateTime.UtcNow.AddHours(24),
+                    userId = user.Id,
+                    name = user.Name,
+                    email = user.Email,
+                    phone = user.Phone
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Invalid Google Token", error = ex.Message });
+            }
+        }
+
         private string GenerateJwtToken(User user)
         {
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
@@ -97,7 +135,7 @@ namespace CarWashBooking.Api.Controllers
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Role, user.Role),
-                new Claim("phone", user.Phone)
+                new Claim(ClaimTypes.Email, user.Email ?? "")
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -126,5 +164,10 @@ namespace CarWashBooking.Api.Controllers
         public string Phone { get; set; } = string.Empty;
         public string Otp { get; set; } = string.Empty;
         public string? Name { get; set; }
+    }
+
+    public class GoogleLoginDto
+    {
+        public string Token { get; set; } = string.Empty;
     }
 }

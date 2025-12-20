@@ -1,0 +1,17 @@
+# General
+.DS_Store
+*.log
+
+# Backend (.NET)
+bin/
+obj/
+*.db
+*.pdb
+*.lock.json
+appsettings.Development.json
+
+# Frontend (Node)
+node_modules/
+dist/
+.env
+.env.local
