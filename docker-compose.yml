@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5001:8080" # Map host 5001 to container 8080 (optional, for debugging)
+    volumes:
+      - ./backend/carwash.db:/app/carwash.db # Persist the SQLite database
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80" # Standard web port
+    depends_on:
+      - backend
+    restart: unless-stopped
