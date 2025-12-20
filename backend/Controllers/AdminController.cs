@@ -32,8 +32,8 @@ namespace CarWashBooking.Api.Controllers
                     Service = b.Service != null ? b.Service.Name : "Unknown",
                     b.VehicleDetails,
                     b.Notes,
-                    CustomerName = b.User != null ? b.User.Name : b.CustomerName,
-                    CustomerPhone = b.User != null ? b.User.Phone : b.CustomerPhone
+                    CustomerName = !string.IsNullOrEmpty(b.CustomerName) ? b.CustomerName : (b.User != null ? b.User.Name : "Customer"),
+                    CustomerPhone = !string.IsNullOrEmpty(b.CustomerPhone) ? b.CustomerPhone : (b.User != null ? b.User.Phone : string.Empty)
                 })
                 .ToListAsync();
 

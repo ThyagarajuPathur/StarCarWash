@@ -1,9 +1,12 @@
 import client from './client';
 
 export interface Booking {
-    id: string;
+    id: number;
     date: string;
-    serviceId: number;
+    serviceId?: number;
+    service?: string;
+    customerName?: string;
+    customerPhone?: string;
     vehicleDetails: string;
     notes?: string;
     status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'NoShow';

@@ -26,7 +26,7 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleStatusChange = async (id: string, newStatus: string) => {
+    const handleStatusChange = async (id: number, newStatus: string) => {
         try {
             await updateBookingStatus(id, newStatus);
             // Optimistic update or refetch
@@ -71,23 +71,12 @@ const AdminDashboard: React.FC = () => {
                                 <tbody>
                                     {bookings.map((booking) => (
                                         <tr key={booking.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                                            <td style={{ padding: '1rem' }}>{booking.id.substring(0, 8)}...</td>
+                                            <td style={{ padding: '1rem' }}>#{booking.id}</td>
                                             <td style={{ padding: '1rem' }}>
-                                                {/* Assuming booking object has customer details if provided by API, 
-                            but the Booking interface in user.ts didn't have name/phone. 
-                            The brief says "List of user bookings with date, status, service, vehicle and notes." for user.
-                            For Admin, "View Bookings by Date". It doesn't explicitly say it returns customer info, 
-                            but usually it does. I'll assume it might not be in the type yet.
-                            Let's check the brief again. 
-                            "Response: List of user bookings..." for user.
-                            For Admin: "GET /admin/bookings/{date}". 
-                            I'll assume the Booking type is shared or similar. 
-                            If customer info is missing, I can't display it. 
-                            I'll check the Booking interface I defined.
-                         */}
-                                                Customer Info
+                                                <div>{booking.customerName || 'N/A'}</div>
+                                                <div style={{ fontSize: '0.8rem', color: '#666' }}>{booking.customerPhone}</div>
                                             </td>
-                                            <td style={{ padding: '1rem' }}>{booking.serviceId}</td>
+                                            <td style={{ padding: '1rem' }}>{booking.service || `Service #${booking.serviceId}`}</td>
                                             <td style={{ padding: '1rem' }}>{booking.vehicleDetails}</td>
                                             <td style={{ padding: '1rem' }}>
                                                 <span style={{ fontWeight: 'bold', color: booking.status === 'Confirmed' ? 'green' : 'gray' }}>

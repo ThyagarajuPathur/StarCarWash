@@ -78,10 +78,16 @@ namespace CarWashBooking.Api.Controllers
 
             // 4. Update User Profile if Phone is missing (Optional but good UX)
             var user = await _context.Users.FindAsync(userId);
-            if (user != null && string.IsNullOrEmpty(user.Phone))
+            if (user != null)
             {
-                user.Phone = request.CustomerPhone;
-                // user.Name = request.CustomerName; // Maybe update name too if empty
+                if (string.IsNullOrEmpty(user.Phone))
+                {
+                    user.Phone = request.CustomerPhone;
+                }
+                if (string.IsNullOrEmpty(user.Name) || user.Name == "Customer")
+                {
+                    user.Name = request.CustomerName;
+                }
             }
 
             await _context.SaveChangesAsync();
