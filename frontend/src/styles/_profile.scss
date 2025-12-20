@@ -1,0 +1,113 @@
+@import 'variables';
+
+.profile-page {
+  @include flex-center;
+  min-height: 80vh;
+  background-color: $light-color;
+  padding: $spacing-unit;
+
+  .profile-container {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    transition: transform 0.2s ease;
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: $dark-color;
+      font-weight: 700;
+      font-size: 1.75rem;
+    }
+
+    .profile-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: $secondary-color;
+      }
+
+      input {
+        padding: 0.75rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+
+        &:focus {
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+          outline: none;
+        }
+
+        &.input-disabled {
+          background-color: #f8f9fa;
+          color: #6c757d;
+          cursor: not-allowed;
+        }
+      }
+
+      small {
+        font-size: 0.8rem;
+        color: $secondary-color;
+      }
+    }
+
+    .btn-primary {
+      margin-top: 1rem;
+      padding: 0.875rem;
+      background-color: $primary-color;
+      color: white;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background-color 0.2s, transform 0.1s;
+
+      &:hover {
+        background-color: darken($primary-color, 10%);
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &:disabled {
+        background-color: lighten($primary-color, 20%);
+        cursor: not-allowed;
+      }
+    }
+
+    .success-message {
+      padding: 0.75rem;
+      background-color: rgba($success-color, 0.1);
+      color: $success-color;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 0.9rem;
+      border: 1px solid rgba($success-color, 0.2);
+    }
+
+    .error-message {
+      padding: 0.75rem;
+      background-color: rgba($danger-color, 0.1);
+      color: $danger-color;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 0.9rem;
+      border: 1px solid rgba($danger-color, 0.2);
+    }
+  }
+}

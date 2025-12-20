@@ -8,6 +8,7 @@ interface AuthContextType {
     isLoading: boolean;
     googleLogin: (credential: string) => Promise<void>;
     logout: () => void;
+    updateUser: (user: User) => void;
 }
 
 
@@ -37,7 +38,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             name: data.name,
             email: data.email,
             phone: data.phone,
-            role: 'user' // Default to user, backend can enforce admin if needed
+            role: (data.role?.toLowerCase() as 'user' | 'admin') || 'user' // Use role from backend, fallback to user
         };
 
         // If backend sends specific role inside token, we might parse it, but for now simplistic approach
@@ -54,8 +55,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         window.location.href = '/login';
     };
 
+    const updateUser = (updatedUser: User) => {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, googleLogin: loginWithGoogle, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, googleLogin: loginWithGoogle, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

@@ -85,7 +85,8 @@ namespace CarWashBooking.Api.Controllers
                 expiresAt = DateTime.UtcNow.AddHours(24),
                 userId = user.Id,
                 name = user.Name,
-                phone = user.Phone
+                phone = user.Phone,
+                role = user.Role
             });
         }
 
@@ -118,7 +119,8 @@ namespace CarWashBooking.Api.Controllers
                     userId = user.Id,
                     name = user.Name,
                     email = user.Email,
-                    phone = user.Phone
+                    phone = user.Phone,
+                    role = user.Role
                 });
             }
             catch (Exception ex)

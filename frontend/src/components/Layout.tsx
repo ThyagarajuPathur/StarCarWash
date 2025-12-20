@@ -16,6 +16,7 @@ const Layout: React.FC = () => {
                     <Link to="/" style={{ marginRight: '1rem' }}>Home</Link>
                     {user ? (
                         <>
+                            <Link to="/profile" style={{ marginRight: '1rem' }}>Profile</Link>
                             <Link to="/my-bookings" style={{ marginRight: '1rem' }}>My Bookings</Link>
                             {/* We might want to check for admin role here if we had it explicitly */}
                             {user.role === 'admin' && <Link to="/admin" style={{ marginRight: '1rem' }}>Admin</Link>}

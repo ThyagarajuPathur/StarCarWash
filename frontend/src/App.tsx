@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import MyBookings from './pages/MyBookings';
 import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 
 import Booking from './pages/Booking';
 
@@ -20,6 +21,7 @@ const App: React.FC = () => {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="my-bookings" element={<MyBookings />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="admin" element={<AdminDashboard />} />
         </Route>
       </Route>
