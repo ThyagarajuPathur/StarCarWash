@@ -1,17 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { getBookingsByDate, updateBookingStatus } from '../api/admin';
+import { getBookingsByDate, updateBookingStatus, getDashboardStats, type DashboardStats } from '../api/admin';
 import type { Booking } from '../api/user';
 import '../styles/main.scss';
 
 const AdminDashboard: React.FC = () => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [bookings, setBookings] = useState<Booking[]>([]);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
+        fetchStats();
         fetchBookings();
     }, [date]);
+
+    const fetchStats = async () => {
+        try {
+            const data = await getDashboardStats();
+            setStats(data);
+        } catch (err) {
+            console.error('Failed to load stats', err);
+        }
+    };
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -31,6 +42,7 @@ const AdminDashboard: React.FC = () => {
             await updateBookingStatus(id, newStatus);
             // Optimistic update or refetch
             setBookings(bookings.map(b => b.id === id ? { ...b, status: newStatus as any } : b));
+            fetchStats();
         } catch (err) {
             alert('Failed to update status');
         }
@@ -53,6 +65,27 @@ const AdminDashboard: React.FC = () => {
                         />
                     </div>
                 </div>
+
+                {stats && (
+                    <div className="stats-overview">
+                        <div className="stat-card">
+                            <h3>Total Bookings</h3>
+                            <p className="stat-value">{stats.totalBookings}</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Today's Bookings</h3>
+                            <p className="stat-value">{stats.todayBookings}</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Total Revenue</h3>
+                            <p className="stat-value">${stats.totalRevenue.toFixed(2)}</p>
+                        </div>
+                        <div className="stat-card warning">
+                            <h3>Pending Actions</h3>
+                            <p className="stat-value">{stats.pendingApprovals}</p>
+                        </div>
+                    </div>
+                )}
 
                 {loading ? <p>Loading...</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
                     bookings.length === 0 ? <p>No bookings for this date.</p> : (

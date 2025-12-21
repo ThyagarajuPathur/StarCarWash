@@ -60,6 +60,38 @@ namespace CarWashBooking.Api.Controllers
 
             return Ok(new { message = "Booking status updated successfully." });
         }
+
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetDashboardStats()
+        {
+            var today = DateTime.Today;
+
+            var totalBookings = await _context.Bookings.CountAsync();
+            var todayBookings = await _context.Bookings.CountAsync(b => b.Date.Date == today);
+
+            var totalRevenue = await _context.Bookings
+                .Include(b => b.Service)
+                .Where(b => b.Status == "Completed")
+                .SumAsync(b => b.Service != null ? b.Service.Price : 0);
+
+            var pendingApprovals = await _context.Bookings.CountAsync(b => b.Status == "Pending");
+
+            return Ok(new DashboardStatsDto
+            {
+                TotalBookings = totalBookings,
+                TodayBookings = todayBookings,
+                TotalRevenue = totalRevenue,
+                PendingApprovals = pendingApprovals
+            });
+        }
+    }
+
+    public class DashboardStatsDto
+    {
+        public int TotalBookings { get; set; }
+        public int TodayBookings { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public int PendingApprovals { get; set; }
     }
 
     public class UpdateStatusDto
