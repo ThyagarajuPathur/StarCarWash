@@ -103,6 +103,7 @@ namespace CarWashBooking.Api.Controllers
         [Required]
         public string CustomerName { get; set; } = string.Empty;
         [Required]
+        [RegularExpression(@"^(\+91[\-\s]?)?[0]?(91)?[6789]\d{9}$", ErrorMessage = "Invalid Indian phone number")]
         public string CustomerPhone { get; set; } = string.Empty;
         [Required]
         public string VehicleDetails { get; set; } = string.Empty;

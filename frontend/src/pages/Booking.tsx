@@ -68,14 +68,41 @@ const Booking: React.FC = () => {
         setStep('details');
     };
 
+    const [phoneError, setPhoneError] = useState('');
+
+    const validatePhone = (phone: string) => {
+        const regex = /^(\+91[\-\s]?)?[0]?(91)?[6789]\d{9}$/;
+        if (!phone) return 'Phone number is required';
+        if (!regex.test(phone)) return 'Invalid Indian phone number';
+        return '';
+    };
+
     const handleDetailsSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const error = validatePhone(details.phone);
+        if (error) {
+            setPhoneError(error);
+            return;
+        }
         setStep('review');
+    };
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setDetails({ ...details, phone: value });
+        if (phoneError) setPhoneError(validatePhone(value));
     };
 
     const handleConfirmBooking = async () => {
         setLoading(true);
         setError('');
+        const pError = validatePhone(details.phone);
+        if (pError) {
+            setPhoneError(pError);
+            setStep('details');
+            setLoading(false);
+            return;
+        }
         try {
             await createBooking({
                 serviceId: selectedService,
@@ -153,9 +180,12 @@ const Booking: React.FC = () => {
                             <input
                                 type="tel"
                                 required
+                                className={phoneError ? 'input-error' : ''}
                                 value={details.phone}
-                                onChange={(e) => setDetails({ ...details, phone: e.target.value })}
+                                onChange={handlePhoneChange}
+                                placeholder="+91 9876543210"
                             />
+                            {phoneError && <span className="error-text">{phoneError}</span>}
                         </div>
                         <div className="form-group">
                             <label>Vehicle Details</label>
