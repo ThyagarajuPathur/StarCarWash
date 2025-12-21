@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CarWashBooking.Api.Data;
+using CarWashBooking.Api.Models;
 
 namespace CarWashBooking.Api.Controllers
 {
@@ -83,6 +84,61 @@ namespace CarWashBooking.Api.Controllers
                 TotalRevenue = totalRevenue,
                 PendingApprovals = pendingApprovals
             });
+        }
+
+        // Service Management
+        [HttpGet("services")]
+        public async Task<IActionResult> GetServices()
+        {
+            var services = await _context.Services.ToListAsync();
+            return Ok(services);
+        }
+
+        [HttpPost("services")]
+        public async Task<IActionResult> CreateService([FromBody] Service service)
+        {
+            _context.Services.Add(service);
+            await _context.SaveChangesAsync();
+            return Ok(service);
+        }
+
+        [HttpPut("services/{id}")]
+        public async Task<IActionResult> UpdateService(int id, [FromBody] Service service)
+        {
+            if (id != service.Id)
+            {
+                return BadRequest(new { message = "ID mismatch" });
+            }
+
+            _context.Entry(service).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Services.Any(e => e.Id == id))
+                {
+                    return NotFound();
+                }
+                throw;
+            }
+
+            return Ok(service);
+        }
+
+        [HttpDelete("services/{id}")]
+        public async Task<IActionResult> DeleteService(int id)
+        {
+            var service = await _context.Services.FindAsync(id);
+            if (service == null)
+            {
+                return NotFound();
+            }
+
+            _context.Services.Remove(service);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Service deleted successfully" });
         }
     }
 
