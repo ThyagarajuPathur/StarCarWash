@@ -32,7 +32,8 @@ const MyBookings: React.FC = () => {
         }
     };
 
-    const getServiceName = (id: number) => {
+    const getServiceName = (id?: number) => {
+        if (!id) return 'Unknown Service';
         const services: { [key: number]: string } = {
             1: 'Interior Wash',
             2: 'Exterior Wash',

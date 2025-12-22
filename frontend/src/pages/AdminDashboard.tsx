@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    getBookingsByDate,
+    getAllBookings,
     updateBookingStatus,
     getDashboardStats,
     getAdminServices,
@@ -17,8 +17,9 @@ type AdminTab = 'bookings' | 'services';
 
 const AdminDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<AdminTab>('bookings');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [filterDate, setFilterDate] = useState(''); // Empty means show all
+    const [allBookings, setAllBookings] = useState<Booking[]>([]);
+    const [displayBookings, setDisplayBookings] = useState<Booking[]>([]);
     const [services, setServices] = useState<Service[]>([]);
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(false);
@@ -31,11 +32,19 @@ const AdminDashboard: React.FC = () => {
     useEffect(() => {
         fetchStats();
         if (activeTab === 'bookings') {
-            fetchBookings();
+            fetchAllBookings();
         } else {
             fetchServices();
         }
-    }, [date, activeTab]);
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (filterDate) {
+            setDisplayBookings(allBookings.filter(b => b.date === filterDate));
+        } else {
+            setDisplayBookings(allBookings);
+        }
+    }, [filterDate, allBookings]);
 
     const fetchStats = async () => {
         try {
@@ -46,12 +55,12 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const fetchBookings = async () => {
+    const fetchAllBookings = async () => {
         setLoading(true);
         setError('');
         try {
-            const data = await getBookingsByDate(date);
-            setBookings(data);
+            const data = await getAllBookings();
+            setAllBookings(data);
         } catch (err) {
             setError('Failed to load bookings');
         } finally {
@@ -75,7 +84,7 @@ const AdminDashboard: React.FC = () => {
     const handleStatusChange = async (id: number, newStatus: string) => {
         try {
             await updateBookingStatus(id, newStatus);
-            setBookings(bookings.map(b => b.id === id ? { ...b, status: newStatus as any } : b));
+            setAllBookings(allBookings.map(b => b.id === id ? { ...b, status: newStatus as any } : b));
             fetchStats();
         } catch (err) {
             alert('Failed to update status');
@@ -85,7 +94,7 @@ const AdminDashboard: React.FC = () => {
     const handleServiceSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (isEditing) {
+            if (isEditing !== null) {
                 await updateService(isEditing, { id: isEditing, ...serviceForm });
             } else {
                 await createService(serviceForm);
@@ -122,13 +131,21 @@ const AdminDashboard: React.FC = () => {
                     <h1>Admin Dashboard</h1>
                     {activeTab === 'bookings' && (
                         <div>
-                            <label style={{ marginRight: '1rem', fontWeight: 'bold' }}>Select Date:</label>
+                            <label style={{ marginRight: '1rem', fontWeight: 'bold' }}>Filter Date:</label>
                             <input
                                 type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ced4da' }}
+                                value={filterDate}
+                                onChange={(e) => setFilterDate(e.target.value)}
+                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ced4da', marginRight: '0.5rem' }}
                             />
+                            {filterDate && (
+                                <button
+                                    onClick={() => setFilterDate('')}
+                                    style={{ padding: '0.5rem 1rem', borderRadius: '4px', background: '#f0f0f0', border: '1px solid #ddd', cursor: 'pointer' }}
+                                >
+                                    Show All
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -171,12 +188,12 @@ const AdminDashboard: React.FC = () => {
 
                 {activeTab === 'bookings' ? (
                     loading ? <p>Loading...</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
-                        bookings.length === 0 ? <p>No bookings for this date.</p> : (
+                        displayBookings.length === 0 ? <p>No bookings found.</p> : (
                             <div className="bookings-table-container" style={{ overflowX: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff' }}>
                                     <thead>
                                         <tr>
-                                            <th style={{ padding: '1rem', textAlign: 'left' }}>Time/ID</th>
+                                            <th style={{ padding: '1rem', textAlign: 'left' }}>Date</th>
                                             <th style={{ padding: '1rem', textAlign: 'left' }}>Customer</th>
                                             <th style={{ padding: '1rem', textAlign: 'left' }}>Service</th>
                                             <th style={{ padding: '1rem', textAlign: 'left' }}>Vehicle</th>
@@ -185,9 +202,12 @@ const AdminDashboard: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {bookings.map((booking) => (
+                                        {displayBookings.map((booking) => (
                                             <tr key={booking.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                                                <td style={{ padding: '1rem' }}>#{booking.id}</td>
+                                                <td style={{ padding: '1rem' }}>
+                                                    <div style={{ fontWeight: 'bold' }}>{booking.date}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#999' }}>ID: #{booking.id}</div>
+                                                </td>
                                                 <td style={{ padding: '1rem' }}>
                                                     <div>{booking.customerName || 'N/A'}</div>
                                                     <div style={{ fontSize: '0.8rem', color: '#666' }}>{booking.customerPhone}</div>

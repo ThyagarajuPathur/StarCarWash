@@ -18,6 +18,30 @@ namespace CarWashBooking.Api.Controllers
             _context = context;
         }
 
+        [HttpGet("bookings")]
+        public async Task<IActionResult> GetAllBookings()
+        {
+            var bookings = await _context.Bookings
+                .Include(b => b.Service)
+                .Include(b => b.User)
+                .OrderBy(b => b.Date)
+                .Select(b => new
+                {
+                    b.Id,
+                    Date = b.Date.ToString("yyyy-MM-dd"),
+                    FullDateTime = b.Date,
+                    b.Status,
+                    Service = b.Service != null ? b.Service.Name : "Unknown",
+                    b.VehicleDetails,
+                    b.Notes,
+                    CustomerName = !string.IsNullOrEmpty(b.CustomerName) ? b.CustomerName : (b.User != null ? b.User.Name : "Customer"),
+                    CustomerPhone = !string.IsNullOrEmpty(b.CustomerPhone) ? b.CustomerPhone : (b.User != null ? b.User.Phone : string.Empty)
+                })
+                .ToListAsync();
+
+            return Ok(bookings);
+        }
+
         [HttpGet("bookings/{date}")]
         public async Task<IActionResult> GetBookingsByDate(DateTime date)
         {
